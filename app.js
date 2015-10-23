@@ -118,19 +118,43 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
               })
               .on('mousedown', function() {
                 function updateLineCoords(mouseCoords) {
-                  linecoords.x1 = linecoords.x2;
-                  linecoords.y1 = linecoords.y2;
-                  linecoords.x2 = mouseCoords[0];
-                  linecoords.y2 = mouseCoords[1];
+                  var temp = linecoords[linecoords.length-1];
+                  var updated = {"x1":0, "y1":0, "x2":0, "y2":0};
+                  updated.x1 = temp.x2;
+                  updated.y1 = temp.y2;
+                  updated.x2 = mouseCoords[0];
+                  updated.y2 = mouseCoords[1];
                   num = num+1;
-                  return linecoords;
+                  linecoords.push(updated);
                 }
 
-                var result = updateLineCoords(d3.mouse(this));
-                console.log(result);
-                
-                drawLine(result);
-                
+                updateLineCoords(d3.mouse(this));
+
+                d3.select("svg").selectAll("g .user")
+                .data(linecoords)
+                .enter()
+                .append("line")
+                .attr("x1", function(d) {
+                  if (d.x1 === 0) {
+                    return d.x2;
+                  }
+                  return d.x1;
+                })
+                .attr("y1", function(d) {
+                  if (d.y1 === 0) {
+                    return d.y2;
+                  }
+                  return d.y1;
+                })
+                .attr("x2", function(d) {
+                  return d.x2;
+                })
+                .attr("y2", function(d) {
+                  return d.y2;
+                })
+                .attr("stroke", "white")
+                .attr("stroke-width", 2);
+ 
               });
 
   var rects = d3.select("svg")
@@ -161,6 +185,5 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
             
   
 });
-
 
 
