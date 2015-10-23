@@ -60,28 +60,34 @@ var Yscale = d3.scale.linear()
 
 var linecoords = [{"x1":0, "y1":0, "x2":0, "y2":0}];
 var num = 1;
+var minmaxlinecoords = {"xmin":10000, "ymin":10000, "xmax":0, "ymax":0};
 
-function drawLine(lc) {
-            d3.select("svg")
-                .selectAll("line .num"+num)
-                .data(lc)
-                .enter()
-                .append("line")
-                .attr("x1", function(d) {
-                  console.log("INSIDE FUNCT", d)
-                  return d.x1;
-                })
-                .attr("y1", function(d) {
-                  return d.y1;
-                })
-                .attr("x2", function(d) {
-                  return d.x2;
-                })
-                .attr("y2", function(d) {
-                  return d.y2;
-                })
-                .attr("stroke", "white")
-                .attr("stroke-width", 2);
+function findLineCoordMinMax() {
+  var xmin = 10000;
+  var ymin = 10000;
+  var xmax = 0;
+  var ymax = 0;
+  linecoords.forEach(function(item) {
+    locaxlMin = d3.min([item.x1,item.x2]);
+    locaylMin = d3.min([item.y1,item.y2]);
+    locaxlMax = d3.max([item.x1,item.x2]);
+    locaylMax = d3.max([item.y1,item.y2]);
+    if (locaxlMin !== 0 & locaylMin !== 0) {
+      if (locaxlMin < xmin) {
+        xmin = locaxlMin;
+      }
+      if (locaylMin < ymin) {
+        ymin = locaylMin;
+      }
+      if (locaxlMax > xmax) {
+        xmax = locaxlMax;
+      }
+      if (locaylMax > ymax) {
+        ymax = locaylMax;
+      }
+    }
+  });
+  return [xmin, ymin, xmax, ymax];
 }
 
 d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
@@ -98,25 +104,89 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
             .enter()
             .append("g")
 
+  var rects = d3.select("svg")
+            .selectAll("rect")
+            .data(RGBdata)
+            .enter()
+            .append("rect")
+            .attr("width", 20)
+            .attr("height", 20)
+            .attr("x", 470)
+            .attr("y", function(d,i) {
+              return 10+i*20+10;
+            })
+            .style("fill", function(d) {
+              console.log(d)
+              return rgbToHex(d);
+            })
+
+  var texts = groups
+          .append("text")
+          .attr("x", 390)
+          .attr("y", function(d,i) {
+            return 25+i*20+10;
+          })
+          .text(function(d) {
+            return "("+d[0].toFixed(2)+", "+d[1].toFixed(2)+")";
+          })
+          .attr("fill", "black");
+
   var circles = groups
             .append("circle")
               .attr("cx", function(d) {
-                // console.log(["x", d[0], Xscale(d[0])])
                 return Xscale(d[0]);
               })
               .attr("cy", function(d) {
-                // console.log(["y", d[1], Yscale(d[1])])
                 return Yscale(d[1]);
               })
               .attr("r", 5)
               .style("fill", "black")
               .on('mouseover', function() {
                 d3.select(this).style("fill", "white");
+
+                var thisData = d3.select(this).data()[0];
+
+                texts.each(function(d,i) {
+                  var used = "("+d[0].toFixed(2)+", "+d[1].toFixed(2)+")";
+                  var cli = "("+thisData[0].toFixed(2)+", "+thisData[1].toFixed(2)+")";
+                  //var cli =  "("+clicked[0].toFixed(2)+", "+clicked[1].toFixed(2)+")";
+                  console.log(used, cli, used===cli);
+                  if (used===cli) {
+                    var coordText = d3.select(this)
+                    if (coordText.attr("fill") === "gray") {
+                      console.log("already gray");
+                    }
+                    else {
+                      coordText.attr("fill", "red");
+                    }
+                  }
+                });
+
               })
               .on('mouseout', function() {
                 d3.select(this).style("fill", "black");
+
+                var thisData = d3.select(this).data()[0];
+
+                texts.each(function(d,i) {
+                  var used = "("+d[0].toFixed(2)+", "+d[1].toFixed(2)+")";
+                  var cli = "("+thisData[0].toFixed(2)+", "+thisData[1].toFixed(2)+")";
+                  //var cli =  "("+clicked[0].toFixed(2)+", "+clicked[1].toFixed(2)+")";
+                  console.log(used, cli, used===cli);
+                  if (used===cli) {
+                    var coordText = d3.select(this)
+                    if (coordText.attr("fill") === "gray") {
+                      console.log("already gray");
+                    }
+                    else {
+                      coordText.attr("fill", "black");
+                    }
+                  }
+                });
+
               })
               .on('mousedown', function() {
+                var thisData = d3.select(this).data()[0];
                 function updateLineCoords(mouseCoords) {
                   var temp = linecoords[linecoords.length-1];
                   var updated = {"x1":0, "y1":0, "x2":0, "y2":0};
@@ -126,9 +196,11 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
                   updated.y2 = mouseCoords[1];
                   num = num+1;
                   linecoords.push(updated);
+
                 }
 
                 updateLineCoords(d3.mouse(this));
+                //updateLineCoords(thisData);
 
                 d3.select("svg").selectAll("g .user")
                 .data(linecoords)
@@ -154,36 +226,30 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
                 })
                 .attr("stroke", "white")
                 .attr("stroke-width", 2);
+
+                //update text color
+                var clicked = [Xscale.invert(d3.mouse(this)[0]),Yscale.invert(d3.mouse(this)[1])];
+
+                texts.each(function(d,i) {
+                  var used = "("+d[0].toFixed(2)+", "+d[1].toFixed(2)+")";
+                  var cli = "("+thisData[0].toFixed(2)+", "+thisData[1].toFixed(2)+")";
+                  //var cli =  "("+clicked[0].toFixed(2)+", "+clicked[1].toFixed(2)+")";
+                  console.log(used, cli, used===cli);
+                  if (used===cli) {
+                    d3.select(this).attr("fill", "gray")
+                  }
+                });
  
               });
 
-  var rects = d3.select("svg")
-            .selectAll("rect")
-            .data(RGBdata)
-            .enter()
-            .append("rect")
-            .attr("width", 20)
-            .attr("height", 20)
-            .attr("x", 470)
-            .attr("y", function(d,i) {
-              return 10+i*20+10;
-            })
-            .style("fill", function(d) {
-              console.log(d)
-              return rgbToHex(d);
-            })
 
-    var texts = groups
-            .append("text")
-            .attr("x", 390)
-            .attr("y", function(d,i) {
-              return 25+i*20+10;
-            })
-            .text(function(d) {
-              return "("+d[0].toFixed(2)+", "+d[1].toFixed(2)+")";
-            });
             
   
 });
+
+
+function dist(x1,y1,x2,y2) {
+  return Math.sqrt(Math.pow(x2-x1,2)+Math.pow(y2-y1,2));
+}
 
 
