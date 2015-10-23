@@ -116,7 +116,7 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
               return 10+i*20+10;
             })
             .style("fill", function(d) {
-              console.log(d)
+              // console.log(d)
               return rgbToHex(d);
             })
 
@@ -150,11 +150,11 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
                   var used = "("+d[0].toFixed(2)+", "+d[1].toFixed(2)+")";
                   var cli = "("+thisData[0].toFixed(2)+", "+thisData[1].toFixed(2)+")";
                   //var cli =  "("+clicked[0].toFixed(2)+", "+clicked[1].toFixed(2)+")";
-                  console.log(used, cli, used===cli);
+                  // console.log(used, cli, used===cli);
                   if (used===cli) {
                     var coordText = d3.select(this)
                     if (coordText.attr("fill") === "gray") {
-                      console.log("already gray");
+                      // console.log("already gray");
                     }
                     else {
                       coordText.attr("fill", "red");
@@ -172,11 +172,11 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
                   var used = "("+d[0].toFixed(2)+", "+d[1].toFixed(2)+")";
                   var cli = "("+thisData[0].toFixed(2)+", "+thisData[1].toFixed(2)+")";
                   //var cli =  "("+clicked[0].toFixed(2)+", "+clicked[1].toFixed(2)+")";
-                  console.log(used, cli, used===cli);
+                  // console.log(used, cli, used===cli);
                   if (used===cli) {
                     var coordText = d3.select(this)
                     if (coordText.attr("fill") === "gray") {
-                      console.log("already gray");
+                      // console.log("already gray");
                     }
                     else {
                       coordText.attr("fill", "black");
@@ -234,7 +234,7 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
                   var used = "("+d[0].toFixed(2)+", "+d[1].toFixed(2)+")";
                   var cli = "("+thisData[0].toFixed(2)+", "+thisData[1].toFixed(2)+")";
                   //var cli =  "("+clicked[0].toFixed(2)+", "+clicked[1].toFixed(2)+")";
-                  console.log(used, cli, used===cli);
+                  //console.log(used, cli, used===cli);
                   if (used===cli) {
                     d3.select(this).attr("fill", "gray")
                   }
