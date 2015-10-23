@@ -58,6 +58,32 @@ var Yscale = d3.scale.linear()
               .domain([0.9,0])
               .range([0,475]);
 
+var linecoords = [{"x1":0, "y1":0, "x2":0, "y2":0}];
+var num = 1;
+
+function drawLine(lc) {
+            d3.select("svg")
+                .selectAll("line .num"+num)
+                .data(lc)
+                .enter()
+                .append("line")
+                .attr("x1", function(d) {
+                  console.log("INSIDE FUNCT", d)
+                  return d.x1;
+                })
+                .attr("y1", function(d) {
+                  return d.y1;
+                })
+                .attr("x2", function(d) {
+                  return d.x2;
+                })
+                .attr("y2", function(d) {
+                  return d.y2;
+                })
+                .attr("stroke", "white")
+                .attr("stroke-width", 2);
+}
+
 d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
   document.body.appendChild(xml.documentElement);
 
@@ -71,19 +97,41 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
             .data(Yxydata)
             .enter()
             .append("g")
-  
+
   var circles = groups
             .append("circle")
               .attr("cx", function(d) {
-                console.log(["x", d[0], Xscale(d[0])])
+                // console.log(["x", d[0], Xscale(d[0])])
                 return Xscale(d[0]);
               })
               .attr("cy", function(d) {
-                console.log(["y", d[1], Yscale(d[1])])
+                // console.log(["y", d[1], Yscale(d[1])])
                 return Yscale(d[1]);
               })
               .attr("r", 5)
-              .style("fill", "black");
+              .style("fill", "black")
+              .on('mouseover', function() {
+                d3.select(this).style("fill", "white");
+              })
+              .on('mouseout', function() {
+                d3.select(this).style("fill", "black");
+              })
+              .on('mousedown', function() {
+                function updateLineCoords(mouseCoords) {
+                  linecoords.x1 = linecoords.x2;
+                  linecoords.y1 = linecoords.y2;
+                  linecoords.x2 = mouseCoords[0];
+                  linecoords.y2 = mouseCoords[1];
+                  num = num+1;
+                  return linecoords;
+                }
+
+                var result = updateLineCoords(d3.mouse(this));
+                console.log(result);
+                
+                drawLine(result);
+                
+              });
 
   var rects = d3.select("svg")
             .selectAll("rect")
