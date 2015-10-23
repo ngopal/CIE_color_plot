@@ -204,7 +204,7 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
                   }
                 });
 
-                d3.selectAll(".randomdot")
+                d3.selectAll(".outlier")
                   .style("fill", function(d) {
                   return hexColors[thisColor];
                 });
@@ -315,7 +315,14 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
 
   var dots = dotsGroup
               .append("circle")
-              .attr("class", "dots")
+              .attr("class", function(d,i) {
+                if (randomDotIndex===i) {
+                  return "dots outlier";
+                }
+                else {
+                  return "dots normal";
+                }
+              })
               .attr("cx", function(d) {
                 return dotsXscale(d.x);
               })
