@@ -67,11 +67,14 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
   //             .attr("cx", Xscale(0.26))
   //             .attr("cy", Yscale(0.37))
   //             .attr("r", 10);
-  
-  var circles = d3.select("svg")
-            .selectAll("circle")
+
+  var groups = d3.select("svg")
+            .selectAll("g .nikhil")
             .data(Yxydata)
             .enter()
+            .append("g")
+  
+  var circles = groups
             .append("circle")
               .attr("cx", function(d) {
                 console.log(["x", d[0], Xscale(d[0])])
@@ -82,9 +85,7 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
                 return Yscale(d[1]);
               })
               .attr("r", 5)
-              .style("fill", "black")
-            .selectAll("text")
-            .append("text");
+              .style("fill", "black");
 
   var rects = d3.select("svg")
             .selectAll("rect")
@@ -102,11 +103,15 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
               return rgbToHex(d);
             })
 
-    // var texts = d3.select("svg")
-    //         .selectAll("text")
-    //         .data(Yxydata)
-    //         .enter()
-    //         .append("text");
+    var texts = groups
+            .append("text")
+            .attr("x", 390)
+            .attr("y", function(d,i) {
+              return 25+i*20+10;
+            })
+            .text(function(d) {
+              return "("+d[0].toFixed(2)+", "+d[1].toFixed(2)+")";
+            });
             
   
 });
