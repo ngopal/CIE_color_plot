@@ -1,4 +1,16 @@
 
+Array.prototype.getUnique = function(){
+   var u = {}, a = [];
+   for(var i = 0, l = this.length; i < l; ++i){
+      if(u.hasOwnProperty(this[i])) {
+         continue;
+      }
+      a.push(this[i]);
+      u[this[i]] = 1;
+   }
+   return a;
+}
+
 
 function XYZtoXYY(arg) {
   var sum, X, Y, Z;
@@ -36,6 +48,7 @@ function rgbToHex(rgbarray) {
     return "#" + componentToHex(rgbarray[0]) + componentToHex(rgbarray[1]) + componentToHex(rgbarray[2]);
 }
 
+// Dark2 from ColorBrewer
 var RGBdata = [[102,194,165],
               [252,141,98],
               [141,160,203],
@@ -45,10 +58,16 @@ var RGBdata = [[102,194,165],
               [229,196,148],
               [179,179,179]];
 
+var hexColors = ["#66C2A5", "#FC8D62", "#8DA0CB", "#E78AC3", "#A6D854", "#FFD92F", "#E5C494", "#B3B3B3"];
+
+var userSelectedColors = [];
+
 var Yxydata = RGBdata.map(function(rgbValue) { 
   console.log(rgbValue);
   return XYZtoXYY(RGBtoXYZ(rgbValue)); 
 });
+
+var colorCodeMap = {"xyy":Yxydata, "rgb": RGBdata};
 
 var Xscale = d3.scale.linear()
               .domain([0,0.8])
@@ -57,6 +76,24 @@ var Xscale = d3.scale.linear()
 var Yscale = d3.scale.linear()
               .domain([0.9,0])
               .range([0,475]);
+
+var dotsWidth = 200;
+var dotsHeight = 200;
+var dotsData = [];
+
+for (var i = 0; i < 100; i++) {
+  dotsData.push({"x":Math.random(), "y":Math.random()});
+}
+
+var randomDotIndex = getRandomInt(0,100);
+
+var dotsXscale = d3.scale.linear()
+              .domain([0,1])
+              .range([0,dotsWidth]);
+  
+var dotsYscale = d3.scale.linear()
+              .domain([1,0])
+              .range([0,dotsHeight]);
 
 var linecoords = [{"x1":0, "y1":0, "x2":0, "y2":0}];
 var num = 1;
@@ -92,11 +129,6 @@ function findLineCoordMinMax() {
 
 d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
   document.body.appendChild(xml.documentElement);
-
-  // var circle4 = d3.select("svg").append("circle")
-  //             .attr("cx", Xscale(0.26))
-  //             .attr("cy", Yscale(0.37))
-  //             .attr("r", 10);
 
   var groups = d3.select("svg")
             .selectAll("g .nikhil")
@@ -149,17 +181,32 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
                 texts.each(function(d,i) {
                   var used = "("+d[0].toFixed(2)+", "+d[1].toFixed(2)+")";
                   var cli = "("+thisData[0].toFixed(2)+", "+thisData[1].toFixed(2)+")";
-                  //var cli =  "("+clicked[0].toFixed(2)+", "+clicked[1].toFixed(2)+")";
-                  // console.log(used, cli, used===cli);
                   if (used===cli) {
                     var coordText = d3.select(this)
                     if (coordText.attr("fill") === "gray") {
-                      // console.log("already gray");
                     }
                     else {
                       coordText.attr("fill", "red");
                     }
                   }
+                });
+
+                // select a random dot to change color to
+                var x_scan = thisData[0];
+                var y_scan = thisData[1];
+                var thisColor;
+
+                colorCodeMap.xyy.map(function(vals) {
+                  if (vals[0] === x_scan) {
+                    if (vals[1] === y_scan) {
+                      thisColor = colorCodeMap.xyy.indexOf(vals);
+                    }
+                  }
+                });
+
+                d3.selectAll(".randomdot")
+                  .style("fill", function(d) {
+                  return hexColors[thisColor];
                 });
 
               })
@@ -171,12 +218,9 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
                 texts.each(function(d,i) {
                   var used = "("+d[0].toFixed(2)+", "+d[1].toFixed(2)+")";
                   var cli = "("+thisData[0].toFixed(2)+", "+thisData[1].toFixed(2)+")";
-                  //var cli =  "("+clicked[0].toFixed(2)+", "+clicked[1].toFixed(2)+")";
-                  // console.log(used, cli, used===cli);
                   if (used===cli) {
                     var coordText = d3.select(this)
                     if (coordText.attr("fill") === "gray") {
-                      // console.log("already gray");
                     }
                     else {
                       coordText.attr("fill", "black");
@@ -187,6 +231,26 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
               })
               .on('mousedown', function() {
                 var thisData = d3.select(this).data()[0];
+
+                var x_scan = thisData[0];
+                var y_scan = thisData[1];
+
+                // update dots
+                colorCodeMap.xyy.map(function(vals) {
+                  if (vals[0] === x_scan) {
+                    if (vals[1] === y_scan) {
+                      userSelectedColors.push(colorCodeMap.xyy.indexOf(vals));
+                    }
+                  }
+                });
+
+                d3.selectAll(".dots").style("fill", function(d) {
+                  var randNumber = getRandomInt(0,userSelectedColors.getUnique().length-1);
+                  return hexColors[userSelectedColors.getUnique()[randNumber]];
+                });
+
+                //real code
+
                 function updateLineCoords(mouseCoords) {
                   var temp = linecoords[linecoords.length-1];
                   var updated = {"x1":0, "y1":0, "x2":0, "y2":0};
@@ -233,17 +297,43 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
                 texts.each(function(d,i) {
                   var used = "("+d[0].toFixed(2)+", "+d[1].toFixed(2)+")";
                   var cli = "("+thisData[0].toFixed(2)+", "+thisData[1].toFixed(2)+")";
-                  //var cli =  "("+clicked[0].toFixed(2)+", "+clicked[1].toFixed(2)+")";
-                  //console.log(used, cli, used===cli);
                   if (used===cli) {
                     d3.select(this).attr("fill", "gray")
                   }
                 });
  
               });
+  
+  var dotsSVG = d3.select("body")
+              .append("svg")
+              .attr("x", dotsWidth)
+              .attr("y", dotsHeight);
 
+  var dotsGroup = dotsSVG.selectAll(".dots")
+              .data(dotsData)
+              .enter()
 
-            
+  var dots = dotsGroup
+              .append("circle")
+              .attr("class", "dots")
+              .attr("cx", function(d) {
+                return dotsXscale(d.x);
+              })
+              .attr("cy", function(d) {
+                return dotsYscale(d.y);
+              })
+              .attr("r", 5)
+              .style("fill", function(d) {
+                var randNumber = getRandomInt(0,userSelectedColors.getUnique().length-1);
+                return hexColors[userSelectedColors.getUnique()[randNumber]];
+              });     
+
+  // var randomdot = dots
+  //             .attr("class", function(d,i) {
+  //               if (randomDotIndex === i) {
+  //                 d3.select(this).attr("class", ".randomdot");
+  //               }
+  //             });     
   
 });
 
@@ -251,5 +341,11 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
 function dist(x1,y1,x2,y2) {
   return Math.sqrt(Math.pow(x2-x1,2)+Math.pow(y2-y1,2));
 }
+
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+
 
 
