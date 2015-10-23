@@ -1,7 +1,5 @@
 
 
-// Code borrowed from https://github.com/dfcreative/color-space
-
 function XYZtoXYY(arg) {
   var sum, X, Y, Z;
   X = arg[0]; Y = arg[1]; Z = arg[2];
