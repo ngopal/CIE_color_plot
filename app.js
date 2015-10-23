@@ -77,8 +77,8 @@ var Yscale = d3.scale.linear()
               .domain([0.9,0])
               .range([0,475]);
 
-var dotsWidth = 200;
-var dotsHeight = 200;
+var dotsWidth = 600;
+var dotsHeight = 600;
 var dotsData = [];
 
 for (var i = 0; i < 100; i++) {
@@ -306,8 +306,8 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
   
   var dotsSVG = d3.select("body")
               .append("svg")
-              .attr("x", dotsWidth)
-              .attr("y", dotsHeight);
+              .attr("width", dotsWidth)
+              .attr("height", dotsHeight);
 
   var dotsGroup = dotsSVG.selectAll(".dots")
               .data(dotsData)
@@ -333,14 +333,7 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
               .style("fill", function(d) {
                 var randNumber = getRandomInt(0,userSelectedColors.getUnique().length-1);
                 return hexColors[userSelectedColors.getUnique()[randNumber]];
-              });     
-
-  // var randomdot = dots
-  //             .attr("class", function(d,i) {
-  //               if (randomDotIndex === i) {
-  //                 d3.select(this).attr("class", ".randomdot");
-  //               }
-  //             });     
+              });         
   
 });
 
