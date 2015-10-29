@@ -82,13 +82,17 @@ var networkHeight = 600;
 var gjson;
 var networkfiles = [
         'samples/game-ws.edgelist',
+        'samples/game-ws2.edgelist',
+        'samples/game-ws3.edgelist',
         'samples/game-rand-10.edgelist',
         'samples/game-rand-50.edgelist',
         'samples/game-ring.edgelist',
+        'samples/game-ring-100.edgelist',
         'samples/game-star-100.edgelist',
         'samples/game-star-50.edgelist',
         'samples/game-kreg-5.edgelist',
-        'samples/game-tree-50.edgelist']
+        'samples/game-tree-50.edgelist',
+        'samples/game-tree-100.edgelist']
 var randomNetworkFile = networkfiles[getRandomInt(0,networkfiles.length-1)];
 
 function isNumeric(n) {
