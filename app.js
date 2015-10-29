@@ -79,13 +79,19 @@ var Yscale = d3.scale.linear()
 
 var dotsWidth = 600;
 var dotsHeight = 600;
+var numDots = 500
 var dotsData = [];
+var gjson;
 
-for (var i = 0; i < 100; i++) {
+function isNumeric(n) {
+  return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
+for (var i = 0; i < numDots; i++) {
   dotsData.push({"x":Math.random(), "y":Math.random()});
 }
 
-var randomDotIndex = getRandomInt(0,100);
+var randomDotIndex = getRandomInt(0,numDots);
 
 var dotsXscale = d3.scale.linear()
               .domain([0,1])
@@ -303,37 +309,115 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
                 });
  
               });
-  
-  var dotsSVG = d3.select("body")
+
+  // start force-directed graph code
+
+  var force = d3.layout.force()
+    .charge(-120)
+    .linkDistance(30)
+    .size([dotsWidth, dotsHeight]);
+
+  function readEdgeList(edgelist) {
+    var graph = {nodes:[], edges:[]};
+    edgearray = edgelist.split(/\r\n|\r|\n/g);
+    edgearray.forEach(function(edge) {
+      var edgescoupled = edge.split(' ');
+      var edgeline = {'source':edgescoupled[0], 'target':edgescoupled[1]};
+      if (graph.edges.indexOf(edgeline) === -1) {
+        graph.edges.push(edgeline);
+        edgescoupled.forEach(function(node) {
+          var nodeline = {'id':node};
+          var found = graph.nodes.some(function (el) {
+            return el.id === node;
+          });
+          if (!found) {
+            if (isNumeric(node)) { 
+              if (node !== undefined) {
+                graph.nodes.push(nodeline); 
+              }
+            }
+          }
+        });
+      }
+    });
+    return graph;
+  }
+
+  d3.text('samples/game-ws.edgelist', function(json) {
+
+    graph = readEdgeList(json);
+    gjson = graph; // for debugging
+
+    var networkSVG = d3.select("body")
               .append("svg")
               .attr("width", dotsWidth)
               .attr("height", dotsHeight);
 
-  var dotsGroup = dotsSVG.selectAll(".dots")
-              .data(dotsData)
-              .enter()
+    // var dots = dotsGroup
+    //             .append("circle")
+    //             .attr("class", function(d,i) {
+    //               if (randomDotIndex===i) {
+    //                 return "dots outlier";
+    //               }
+    //               else {
+    //                 return "dots normal";
+    //               }
+    //             })
+    //             .attr("cx", function(d) {
+    //               return dotsXscale(d.x);
+    //             })
+    //             .attr("cy", function(d) {
+    //               return dotsYscale(d.y);
+    //             })
+    //             .attr("r", 5)
+    //             .style("fill", function(d) {
+    //               var randNumber = getRandomInt(0,userSelectedColors.getUnique().length-1);
+    //               return hexColors[userSelectedColors.getUnique()[randNumber]];
+    //             });         
 
-  var dots = dotsGroup
-              .append("circle")
-              .attr("class", function(d,i) {
-                if (randomDotIndex===i) {
-                  return "dots outlier";
-                }
-                else {
-                  return "dots normal";
-                }
-              })
-              .attr("cx", function(d) {
-                return dotsXscale(d.x);
-              })
-              .attr("cy", function(d) {
-                return dotsYscale(d.y);
-              })
-              .attr("r", 5)
-              .style("fill", function(d) {
-                var randNumber = getRandomInt(0,userSelectedColors.getUnique().length-1);
-                return hexColors[userSelectedColors.getUnique()[randNumber]];
-              });         
+    force
+      .nodes(graph.nodes)
+      .links(graph.edges)
+      .start();
+
+
+    var link = networkSVG.selectAll(".link")
+        .data(graph.edges)
+      .enter().append("line")
+        .attr("class", "link")
+        .style("stroke-width", 2);
+
+    var node = networkSVG.selectAll(".node")
+        .data(graph.nodes)
+      .enter().append("circle")
+        .attr("class", function(d, i) {
+          if (randomDotIndex===i) {
+            return "node outlier";
+          }
+          else {
+            return "node normal";
+          }
+        })
+        .attr("r", 5)
+        .style("fill", "gray")
+        .call(force.drag);
+
+    node.append("title")
+        .text(function(d) { return d.id; });
+
+    force.on("tick", function() {
+      link.attr("x1", function(d) { return d.source.x; })
+          .attr("y1", function(d) { return d.source.y; })
+          .attr("x2", function(d) { return d.target.x; })
+          .attr("y2", function(d) { return d.target.y; });
+
+      node.attr("cx", function(d) { return d.x; })
+          .attr("cy", function(d) { return d.y; });
+    });
+    
+  });
+  
+  
   
 });
 
