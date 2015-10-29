@@ -95,7 +95,7 @@ function isNumeric(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
-var randomNodeIndex;
+var randomLinkIndex;
 
 var linecoords = [{"x1":0, "y1":0, "x2":0, "y2":0}];
 var num = 1;
@@ -207,7 +207,7 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
                 });
 
                 d3.selectAll(".outlier")
-                  .style("fill", function(d) {
+                  .style("stroke", function(d) {
                   return hexColors[thisColor];
                 });
 
@@ -246,7 +246,7 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
                   }
                 });
 
-                d3.selectAll(".node").style("fill", function(d) {
+                d3.selectAll(".link").style("stroke", function(d) {
                   var randNumber = getRandomInt(0,userSelectedColors.getUnique().length-1);
                   return hexColors[userSelectedColors.getUnique()[randNumber]];
                 });
@@ -346,7 +346,7 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
     console.log(randomNetworkFile);
 
     graph = readEdgeList(json);
-    randomNodeIndex = getRandomInt(0,graph.nodes.length-1);
+    randomLinkIndex = getRandomInt(0,graph.edges.length-1);
     gjson = graph; // for debugging
 
     var networkSVG = d3.select("body")
@@ -363,26 +363,23 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
     var link = networkSVG.selectAll(".link")
         .data(graph.edges)
       .enter().append("line")
-        .attr("class", "link")
-        .style("stroke-width", 1)
+        .attr("class", function(d, i) {
+          if (randomLinkIndex===i) {
+            return "link outlier";
+          }
+          else {
+            return "link normal";
+          }
+        })
+        .style("stroke-width", 1.5)
         .style("stroke", "gray");
 
     var node = networkSVG.selectAll(".node")
         .data(graph.nodes)
       .enter().append("circle")
-        .attr("class", function(d, i) {
-          if (randomNodeIndex===i) {
-            return "node outlier";
-          }
-          else {
-            return "node normal";
-          }
-        })
+        .attr("class", "node")
         .attr("r", 5)
-        .style("fill", function(d) {
-            var randNumber = getRandomInt(0,userSelectedColors.getUnique().length-1);
-            return hexColors[userSelectedColors.getUnique()[randNumber]];
-        }) 
+        .style("fill", "gray") 
         .call(force.drag);
 
     node.append("title")
