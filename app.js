@@ -77,29 +77,16 @@ var Yscale = d3.scale.linear()
               .domain([0.9,0])
               .range([0,475]);
 
-var dotsWidth = 600;
-var dotsHeight = 600;
-var numDots = 500
-var dotsData = [];
+var networkWidth = 600;
+var networkHeight = 600;
+var numNodes = 100
 var gjson;
 
 function isNumeric(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
-for (var i = 0; i < numDots; i++) {
-  dotsData.push({"x":Math.random(), "y":Math.random()});
-}
-
-var randomDotIndex = getRandomInt(0,numDots);
-
-var dotsXscale = d3.scale.linear()
-              .domain([0,1])
-              .range([0,dotsWidth]);
-  
-var dotsYscale = d3.scale.linear()
-              .domain([1,0])
-              .range([0,dotsHeight]);
+var randomNodeIndex = getRandomInt(0,numNodes);
 
 var linecoords = [{"x1":0, "y1":0, "x2":0, "y2":0}];
 var num = 1;
@@ -250,7 +237,7 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
                   }
                 });
 
-                d3.selectAll(".dots").style("fill", function(d) {
+                d3.selectAll(".node").style("fill", function(d) {
                   var randNumber = getRandomInt(0,userSelectedColors.getUnique().length-1);
                   return hexColors[userSelectedColors.getUnique()[randNumber]];
                 });
@@ -315,31 +302,34 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
   var force = d3.layout.force()
     .charge(-120)
     .linkDistance(30)
-    .size([dotsWidth, dotsHeight]);
+    .size([networkWidth, networkHeight]);
 
   function readEdgeList(edgelist) {
     var graph = {nodes:[], edges:[]};
+    var nodestemp = [];
     edgearray = edgelist.split(/\r\n|\r|\n/g);
     edgearray.forEach(function(edge) {
       var edgescoupled = edge.split(' ');
-      var edgeline = {'source':edgescoupled[0], 'target':edgescoupled[1]};
-      if (graph.edges.indexOf(edgeline) === -1) {
-        graph.edges.push(edgeline);
-        edgescoupled.forEach(function(node) {
-          var nodeline = {'id':node};
-          var found = graph.nodes.some(function (el) {
-            return el.id === node;
-          });
-          if (!found) {
-            if (isNumeric(node)) { 
-              if (node !== undefined) {
-                graph.nodes.push(nodeline); 
-              }
-            }
-          }
-        });
+      if (edgescoupled.length !== 2) {
+        return true; // this just skips the last blank line in the file
       }
+      var edgeline = {"source":+edgescoupled[0], "target":+edgescoupled[1]};
+      var edgefound = graph.edges.some(function(el) {
+        return (el.source === edgescoupled[0]) & (el.target === edgescoupled[1]);
+      });
+      if (!edgefound) {
+        graph.edges.push(edgeline);
+        nodestemp.push(edgescoupled[0]);
+        nodestemp.push(edgescoupled[1]);
+      }
+
     });
+    graph.nodes = nodestemp.getUnique()
+      .filter(isNumeric)
+      .sort(function(a,b){return a - b})
+      .map(function(eachnode) {
+        return {id:eachnode};
+      });
     return graph;
   }
 
@@ -350,30 +340,8 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
 
     var networkSVG = d3.select("body")
               .append("svg")
-              .attr("width", dotsWidth)
-              .attr("height", dotsHeight);
-
-    // var dots = dotsGroup
-    //             .append("circle")
-    //             .attr("class", function(d,i) {
-    //               if (randomDotIndex===i) {
-    //                 return "dots outlier";
-    //               }
-    //               else {
-    //                 return "dots normal";
-    //               }
-    //             })
-    //             .attr("cx", function(d) {
-    //               return dotsXscale(d.x);
-    //             })
-    //             .attr("cy", function(d) {
-    //               return dotsYscale(d.y);
-    //             })
-    //             .attr("r", 5)
-    //             .style("fill", function(d) {
-    //               var randNumber = getRandomInt(0,userSelectedColors.getUnique().length-1);
-    //               return hexColors[userSelectedColors.getUnique()[randNumber]];
-    //             });         
+              .attr("width", networkWidth)
+              .attr("height", networkHeight);     
 
     force
       .nodes(graph.nodes)
@@ -385,13 +353,14 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
         .data(graph.edges)
       .enter().append("line")
         .attr("class", "link")
-        .style("stroke-width", 2);
+        .style("stroke-width", 1)
+        .style("stroke", "gray");
 
     var node = networkSVG.selectAll(".node")
         .data(graph.nodes)
       .enter().append("circle")
         .attr("class", function(d, i) {
-          if (randomDotIndex===i) {
+          if (randomNodeIndex===i) {
             return "node outlier";
           }
           else {
@@ -399,7 +368,10 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
           }
         })
         .attr("r", 5)
-        .style("fill", "gray")
+        .style("fill", function(d) {
+            var randNumber = getRandomInt(0,userSelectedColors.getUnique().length-1);
+            return hexColors[userSelectedColors.getUnique()[randNumber]];
+        }) 
         .call(force.drag);
 
     node.append("title")
