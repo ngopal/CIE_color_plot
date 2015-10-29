@@ -79,14 +79,23 @@ var Yscale = d3.scale.linear()
 
 var networkWidth = 600;
 var networkHeight = 600;
-var numNodes = 100
 var gjson;
+var networkfiles = [
+        'samples/game-ws.edgelist',
+        'samples/game-rand-10.edgelist',
+        'samples/game-rand-50.edgelist',
+        'samples/game-ring.edgelist',
+        'samples/game-star-100.edgelist',
+        'samples/game-star-50.edgelist',
+        'samples/game-kreg-5.edgelist',
+        'samples/game-tree-50.edgelist']
+var randomNetworkFile = networkfiles[getRandomInt(0,networkfiles.length-1)];
 
 function isNumeric(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
-var randomNodeIndex = getRandomInt(0,numNodes);
+var randomNodeIndex;
 
 var linecoords = [{"x1":0, "y1":0, "x2":0, "y2":0}];
 var num = 1;
@@ -333,9 +342,11 @@ d3.xml("CIE1931xy_blank.svg", "image/svg+xml", function(xml) {
     return graph;
   }
 
-  d3.text('samples/game-ws.edgelist', function(json) {
+  d3.text(randomNetworkFile, function(json) {
+    console.log(randomNetworkFile);
 
     graph = readEdgeList(json);
+    randomNodeIndex = getRandomInt(0,graph.nodes.length-1);
     gjson = graph; // for debugging
 
     var networkSVG = d3.select("body")
